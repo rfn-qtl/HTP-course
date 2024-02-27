@@ -3,7 +3,7 @@
 # Raster and cloud point on R practice
 # Author: Roberto Fritsche Neto
 # E-mail: rfneto@agcenter.lsu.edu
-# Last update: Jun 24, 2023 
+# Last update: Feb 8, 2024 
 ########################################
 
 # Libraries
@@ -18,20 +18,18 @@ library(data.table)
 library(rlas)
 library(lidR)
 
-#library(rgdal)
-
-
 # setting the number of cores that will be used
 registerDoParallel(cores = 8) # type the number of cores you want to use
 getDoParWorkers()
 ###########################
 
 #importing mosaics
-dir()
 mosaic_parrot <- raster::stack("../../datasets/mosaics/60DAS_22_03_sequoia.tif")
 print(mosaic_parrot)
 plot(mosaic_parrot) #plot all
 plot(mosaic_parrot, 1) #plot only band 1
+# camera parrot sequoia (G, R, RE, NIR) 
+plotRGB(mosaic_parrot, r=2, g=1, b=1, stretch="hist")
 click(mosaic_parrot) #plot composite image - pixel composition
 
 mosaic_VT <- stack("../../datasets/mosaics/60DAS_22_03_drone.tif")
@@ -47,14 +45,12 @@ print(plots_rep1)
 plot(plots_rep1, add = T, col = "White")
 
 #Getting specific info
-crs(mosaic_VT) #reference system
-crs(plots_rep1) #reference system
 extent(plots_rep1) #limits
 length(plots_rep1) #number of features (plots)
 plot(plots_rep1[360,]) #plot feature number 1
 head(plots_rep1@data, 6)
 # value from name$... are the variables of the shapefile (same as qgis attribute table) e.g.:
-plots_rep1$plot #plot names
+plots_rep1$cat #plot names
 
 # clipping raster by plots - a function in parallel 
 plot_clip <- function(ortho, shape) {
@@ -76,6 +72,7 @@ dev.off()
 
 # Removing soil/background using Otsu method to determine the threshold based on histogram of pixel values
 EX1 <- rasterbyplots[[360]]
+plotRGB(EX1)
 
 # First, we let's calculate EXG index (Excess Green Index)
 ExGI <- overlay(x = EX1,
@@ -104,6 +101,8 @@ thr <- EBImage::otsu(x = raster::as.matrix(ExGI),
                        max(raster::as.matrix(ExGI), na.rm = TRUE)
                        ),
                        levels = 256)
+
+thr
  
 # creating a mask using the Otsu value
 soilMask  <- ExGI > thr
@@ -149,7 +148,6 @@ for (i in 1:length(rasterbyplots)) {
 length(plots_without_soil)
 print(plots_without_soil[[359]])
 plotRGB(plots_without_soil[[359]])
-
 
 ########################################
 # Indices and canopy cover
@@ -214,6 +212,8 @@ cat("plot", i, "\n")
 
 head(output)
 tail(output)
+cor(output$area_perc_NGRDI, output$area_perc_ExGI)
+
 
 ########################################
 # Counting the number of objects - stand

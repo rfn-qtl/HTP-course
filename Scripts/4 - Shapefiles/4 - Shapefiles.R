@@ -17,7 +17,6 @@ library(raster)
 # Row The row [also called column] number of each plot in the experimental grid (numeric)
 # It is recommended to have repeated Barcodes and Plot numbers if there are multi-row plots (mrowplot= >1) as the plotshpcreatre function accounts for this redundancy within the function.
 
-
 # First, we need to load or reate a fieldbook
 fieldbook <- data.frame(
   Loc = rep("PIR", 180*2),
@@ -74,6 +73,6 @@ plots_rep1 <- shapefile("../shapes/PIR-HN-REP1_PIR_HN_R1_buff.shp")
 print(plots_rep1)
 plot(plots_rep1, add = T, col = "White")
 
-
+# all.plots <- rbind(plots_rep1, plots_rep2, ...)
 
 #### the end ######

@@ -45,6 +45,7 @@ dim(gray.seed)
 plot(gray.seed)
 
 # lets see the channels as matrices
+plot(lena)
 lena[,,,1][1:5, 1:5] # just one channel
 diploid[,,,3][1:5, 1:5] # third channel
 gray.seed[,,,1][1:5, 1:5]
@@ -204,6 +205,7 @@ image_append(c(img, img_blurred))
 # Or use any of the standard kernels
 img_sobel <- image_convolve(img, 'Sobel')
 image_append(c(img, img_sobel))
+dev.off()
 
 # pixel composition - help to build masks
 # load images as mosaics
