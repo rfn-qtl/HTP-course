@@ -63,6 +63,8 @@ plot_clip <- function(ortho, shape) {
 # clipping all plots
 rasterbyplots <- plot_clip(mosaic_VT, plots_rep1)
 
+# all.shpaes <- rbind(shape1, shape2, ...)
+  
 # lets' check
 class(rasterbyplots)
 length(rasterbyplots)
@@ -106,6 +108,7 @@ thr
  
 # creating a mask using the Otsu value
 soilMask  <- ExGI > thr
+head(soilMask)
  
 # removing the soil
 plotXMasked <- mask(x = EX1, mask = soilMask, maskvalue = FALSE)
@@ -198,6 +201,7 @@ cat("plot", i, "\n")
                        fun = function(Red, Green, Blue){
                          return(((2*Green/256) - Green/256 - Red/256))})
     
+    
     idx.NGRDI.df <- as.data.frame(idx.NGRDI)
     idx.ExGI.df <- as.data.frame(idx.ExGI)
       
@@ -213,7 +217,7 @@ cat("plot", i, "\n")
 head(output)
 tail(output)
 cor(output$area_perc_NGRDI, output$area_perc_ExGI)
-
+cor(output$NGRDI, output$ExGI)
 
 ########################################
 # Counting the number of objects - stand
@@ -400,7 +404,6 @@ plot.cloud60 <- clipper.cloud(las60, plots_rep1) #clip cloud for plot canopy hei
 )
 
 plot.cloud0 <- clipper.cloud(las0, plots_rep1) #clip cloud for plot soil level
-
 
 #applying a percentile to canopy height
 p90.60 <- lapply(plot.cloud60, function(x) { quantile(x@data$Z, .90) }) #90th percentile
