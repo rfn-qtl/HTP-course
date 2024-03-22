@@ -3,7 +3,7 @@
 # Envirotyping
 # Author: Roberto Fritsche Neto
 # E-mail: rfneto@agcenter.lsu.edu
-# Last update: Feb 27, 2024 
+# Last update: Mar 4, 2024 
 ########################################
 
 #loading packages
@@ -26,11 +26,19 @@ met$Name
 dim(met)
 head(met)
 tail(met)
+
+# define the period we want to retrieve historical weather information
 period <- 2019:2023
 trial <- met$Name  
+# grid to combine years and trials
 grid2 <- expand.grid(trial, period)
+grid2
+
 colnames(grid2) <- c("Name", "period")
+
+# merge grid and met dataframe
 grid2 <- merge(grid2, met)
+grid2
 grid2$planting <- gsub("2023", "", grid2$planting, fixed = T)
 grid2$harvest <- gsub("2023", "", grid2$harvest, fixed = T)
 dim(grid2)
@@ -70,7 +78,15 @@ aux <- met[,c(1,5)]
 colnames(aux) <- c("env", "Alt")
 aux2 <- merge(env.data, aux)
 dim(aux2)
-df.clim <- processWTH(env.data = aux2,Tbase1 = 12,Tbase2 = 24,Topt1 = 33,Topt2 = 37, Alt = aux2$Alt)
+
+# the use the cardinals
+df.clim <- processWTH(env.data = aux2, 
+                      Tbase1 = 12, 
+                      Tbase2 = 24, 
+                      Topt1 = 33, 
+                      Topt2 = 37, 
+                      Alt = aux2$Alt)
+
 head(df.clim)
 length(unique(df.clim$env))
 dim(df.clim)
@@ -79,7 +95,13 @@ sum(is.na(df.clim))
 
 # defining stage interval (day of start), stage names to define de EC for T matrix 
 (var.i = names(df.clim)[c(9:16,22:29)])
-stages = c('EM_MAX.TIL',"MAX.TIL_PAN.INIT", "PAN.INIT_PRE.FLW", "PRE.FLW_FLW", "FLW_POST.FLW", "POST.FLW_MAT")
+stages = c('EM_MAX.TIL',
+           "MAX.TIL_PAN.INIT", 
+           "PAN.INIT_PRE.FLW", 
+           "PRE.FLW_FLW", 
+           "FLW_POST.FLW", 
+           "POST.FLW_MAT")
+
 interval <- c(0, 45, 60, 75, 90, 105) # do not include the last date
 
 EC <- W_matrix(env.data = df.clim, 
@@ -152,6 +174,7 @@ dim(EC)
 
 ################# Quality Control and feature selection ###############
 ##### Correlation - eliminating those almost perfected correlated #####
+#######################################################################
 library(caret)
 highlyCorrelated <- findCorrelation(cor(EC), cutoff = 0.98)
 print(highlyCorrelated)
@@ -159,23 +182,42 @@ EC.clean <- EC[,-highlyCorrelated]
 dim(EC.clean)
 EC.clean[EC.clean == "NaN"] <- 0
 
+# this dataset can be use to run reaction norms.
+# For that, we need to ran a regression of the treatments performance on the environment gradient
+# let's take a look at two of them
+EC.clean[,1:2]
+
 # plot the EC - like environmental markers
 heatmaply(EC.clean, 
           fontsize_row = 6,
           fontsize_col = 6,
           file = c("EC_heatmap.html", "EC_heatmap.png"))
 
+######################################################
 # Obtain the environmental relationship matrix - ERM
-kinship <- env_kernel(env.data = as.matrix(EC.clean), is.scaled = T, gaussian = T, sd.tol = 5)[[2]]
+######################################################
+
+# useful to add in mixed model equations to explain the relatiosnhip between enviroments and model GxE
+kinship <- env_kernel(env.data = as.matrix(EC.clean), 
+                      is.scaled = T, 
+                      gaussian = T, 
+                      sd.tol = 5)[[2]]
 dim(kinship)
-kinship
+# this a Gaussian kernel, capturing the linear and non linear relationship between environments
+# it is based on the euclidean distance, using all independent EC
+# It may be improved using a recursive feature selection
+round(kinship, 2)
+
 saveRDS(kinship, "W_kinship.")
 heatmaply(kinship, 
           fontsize_row = 6,
           fontsize_col = 6,
           file = c("EC_kinship_heatmap.html", "EC_kinship_heatmap.png"))
 
-# clustering
+##################################################
+# clustering - useful to create mega enviroments
+##################################################
+
 library(tidyverse)  # data manipulation
 library(cluster)    # clustering algorithms
 library(factoextra) # clustering algorithms & visualization
@@ -210,5 +252,4 @@ sum(k$size)
 
 dim(clusters)
 write.table(clusters, "clusters.txt")
-
 ######## the end #################
