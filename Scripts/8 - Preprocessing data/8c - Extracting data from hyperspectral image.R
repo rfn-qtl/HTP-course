@@ -113,10 +113,17 @@ NGRDI <- overlay(x = EX1,
                  fun = function(Red, Green, Blue){
                    return(((Green - Red)/(Green + Red)))}) 
 
+
+GCC <- overlay(x = EX1,
+               fun = function(Red, Green, Blue){
+                 return(((Green - Blue)/(Green + Blue)))})
+
 # lets' check it
 plot(ExGI)
 plot(NGRDI)
-click(NGRDI)
+plot(GCC)
+thr.manual <- range(click(GCC))
+thr.manual
 
 # obtain the Otsu threshold for this plot
 # for the ExGI
@@ -125,18 +132,34 @@ thr <- EBImage::otsu(x = raster::as.matrix(ExGI),
                       max(raster::as.matrix(ExGI), na.rm = TRUE)
             ),
             levels = 256)
+thr
+
 # for the NGRDI
 thr2 <- EBImage::otsu(x = raster::as.matrix(NGRDI),
             range = c(min(raster::as.matrix(NGRDI), na.rm = TRUE),
                       max(raster::as.matrix(NGRDI), na.rm = TRUE)
             ),
             levels = 256)
+thr2
+
+# for the GCC
+thr3 <- EBImage::otsu(x = raster::as.matrix(GCC),
+                      range = c(min(raster::as.matrix(GCC), na.rm = TRUE),
+                                max(raster::as.matrix(GCC), na.rm = TRUE)
+                      ),
+                      levels = 256)
+thr3
 
 # creating a mask using the Otsu values
 soilMask  <- ExGI > thr
-soilMask2  <- NGRDI > thr
-soilMask3  <- NGRDI < -.06 | NGRDI > .06
+soilMask2  <- NGRDI > thr2
+soilMask3  <- GCC > thr3
+soilMask4 <- GCC < -0.16 | GCC > 0.16
+
+plot(soilMask)
+plot(soilMask2)
 plot(soilMask3)
+plot(soilMask4)
 
 # removing the background
 # ExGI
@@ -145,12 +168,15 @@ plotRGB(plotXMasked)
 # NGRDI
 plotXMasked2 <- mask(x = EX1, mask = soilMask2, maskvalue = FALSE)
 plotRGB(plotXMasked2)
-# Our own filter based on NGRDI
+# GCC
 plotXMasked3 <- mask(x = EX1, mask = soilMask3, maskvalue = FALSE)
 plotRGB(plotXMasked3)
+# Manual filter based on GCC
+plotXMasked4 <- mask(x = EX1, mask = soilMask4, maskvalue = FALSE)
+plotRGB(plotXMasked4)
 
 # finally, apply the mask on a hyper
-hyper_Masked <- raster::mask(x = hyper.crop[[1]], mask = soilMask3)
+hyper_Masked <- raster::mask(x = hyper.crop[[1]], mask = soilMask4)
 
 # Picking the number of layers in a hyper image
 wavebands <- round(as.numeric(
@@ -198,12 +224,12 @@ system.time(
     h.c <-  crop(i.h, shpfl)
     v.c <-  crop(i.rgb, shpfl)
     
-    NGRDI <- overlay(x = v.c,
-                     fun = function(Red, Green, Blue){
-                       return(((Green - Red)/(Green + Red)))}) 
+    GCC <- overlay(x = v.c,
+                   fun = function(Red, Green, Blue){
+                     return(((Green - Blue)/(Green + Blue)))})
     
-    Mask  <- NGRDI < -.06 | NGRDI > .06
-    Masked <- mask(x = EX1, mask = soilMask3, maskvalue = FALSE)
+    Mask  <- GCC < -0.16 | GCC > 0.16
+    Masked <- mask(x = v.c, mask = Mask, maskvalue = FALSE)
     h.m <- raster::mask(x = h.c, mask = Mask)
     
     md <- unlist(apply(as.array(h.m), MARGIN = 3, median, na.rm = T))
