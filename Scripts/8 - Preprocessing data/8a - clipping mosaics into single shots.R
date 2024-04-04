@@ -74,6 +74,7 @@ rasterbyplots <- plot_clip(mosaic_1, shpfl)
 class(rasterbyplots)
 length(rasterbyplots)
 plotRGB(rasterbyplots[[21]])
+plotRGB(rasterbyplots[[1]])
 
 # save the single shots in a folder
 # First, let's create a new directory

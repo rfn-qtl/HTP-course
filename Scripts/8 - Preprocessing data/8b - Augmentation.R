@@ -39,7 +39,6 @@ m
 img_affine <- affine(img, m)
 display(img_affine, method = "raster")
 
-
 # So, let's increase or imagery dataset
 # creating a new folder
 dir.create("../../datasets/augmented")
